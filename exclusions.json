@@ -1,0 +1,22 @@
+{
+  "get-cyber-safe-guide-small-businesses-v2-e": {
+    "exclude_pages": [0, 1, 2, 3, 27, 28, 29, 30, 31, 32, 33],
+    "total_pages": 33
+  },
+  "NIST.SP.800-124r2": {
+    "exclude_pages": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 56, 57, 58, 59, 60],
+    "total_pages": 60
+  },
+  "CSI-PHISHING-GUIDANCE": {
+    "exclude_pages": [0, 1, 12, 13],
+    "total_pages": 13
+  },
+  "itsm00099-ransomware-playbook-e": {
+    "exclude_pages": [0, 3, 8, 27],
+    "total_pages": 42
+  },
+  "Non-Fed-Guidance_for_Securing_Your_Web_Browsers_Aug-23_Revision": {
+    "exclude_pages": [],
+    "total_pages": 2
+  }
+}
