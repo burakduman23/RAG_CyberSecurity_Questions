@@ -1,35 +1,26 @@
-import glob
-import pymupdf4llm
-import json
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from pathlib import Path
+import chromadb
 
-exclusions = json.load(open("exclusions.json", "r", encoding="utf-8"))
-
-
-def convert_pdf_to_markdown_pages(pdf_files):
-    for  pdf_file in pdf_files:
-        included_pages = [i for i in range(exclusions[Path(
-            pdf_file).stem]["total_pages"]) if i not in exclusions[Path(pdf_file).stem]["exclude_pages"]]
-        pages=pymupdf4llm.to_markdown(pdf_file,
-                                           footer=False,
-                                           header=False,
-                                           page_chunks=True,
-                                           pages=included_pages)
-
-        # Uncomment the following line to save the markdown files in the md_files folder
-        #Path(f"./md_files/{Path(pdf_file).stem}.md").write_text(pages,encoding="utf-8")
-        return chunking_markdown_pages(pages)
-
-def chunking_markdown_pages(pages):
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=400,
-        chunk_overlap=35,
-        length_function=len,
+def send_query_to_chromadb(query, top_k=8):
+    collection = client.get_collection(name="data_chunks")
+    results = collection.query(
+        query_texts=[query],
+        n_results=top_k
     )
-    chunks = text_splitter.split_text(pages)
-    return chunks
+    return results
 
 
 if __name__ == "__main__":
-    convert_pdf_to_markdown_pages(glob.glob("./src/*.pdf"))
+
+    client = chromadb.PersistentClient(path="./chromadb_storage")
+    run = True
+    while run:
+        user_query = input("Enter your query (or type 'exit' to quit): ")
+        if user_query.lower() == "exit":
+            run = False
+            print("Exiting the program.")
+        else:
+            results = send_query_to_chromadb(user_query, top_k=8)
+            print("Top results:")
+            for i, result in enumerate(results['documents'][0]):
+                print(f"{i + 1}. {result}")
+                print(f"   Page Number: {results['metadatas'][0][i]['page_numbers']}, Chunk Number: {results['metadatas'][0][i]['chunk_numbers']}, Source File: {results['metadatas'][0][i]['src_files']}")
