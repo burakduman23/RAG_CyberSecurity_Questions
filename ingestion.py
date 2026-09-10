@@ -1,17 +1,20 @@
 
 from glob import glob
-
+import chromadb
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 import pymupdf4llm
 from sentence_transformers import SentenceTransformer
 from pathlib import Path
 from clean_store import store_chunks_in_chromadb
 import json
+
+pdf_files = sorted(Path("./pdfs").glob("*.pdf"))
 model = SentenceTransformer(
     "sentence-transformers/all-MiniLM-L6-v2"
 )
 exclusions = json.load(open("exclusions.json", "r", encoding="utf-8"))
-
+client = chromadb.PersistentClient(path="./chromadb_storage")
+COLLECTION_NAME = "data_chunks"
 text_splitter = RecursiveCharacterTextSplitter(
     chunk_size=512,
     chunk_overlap=75,
@@ -26,6 +29,7 @@ text_splitter = RecursiveCharacterTextSplitter(
         ""
     ]
 )
+
 
 def convert_pdf_to_markdown_pages(pdf_files):
     all_pages = []
@@ -42,8 +46,8 @@ def convert_pdf_to_markdown_pages(pdf_files):
         # Uncomment the following line to save the markdown files in the md_files folder
         # Path(f"./md_files/{Path(pdf_file).stem}.md").write_text(pages,encoding="utf-8")
         all_pages.extend(pages)
-    print
     return chunk_markdown_pages(all_pages)
+
 
 def chunk_markdown_pages(pages):
     chunks = []
@@ -57,20 +61,42 @@ def chunk_markdown_pages(pages):
 
         for i, chunk in enumerate(page_chunks):
             # Convert numpy array to list
-            embedding = model.encode(chunk).tolist()
             chunks.append({
                 "id": f"{Path(src_file).stem}_page_{page_number}_chunk_{i}",
                 "text": chunk,
                 "page_number": page_number,
                 "chunk_number": i,
-                "embedding": embedding,
                 "src_file": src_file
             })
             # Uncomment the following line to save the chunks in the chunks folder
-            #Path(f"./chunks/{Path(src_file).stem}_page_{page_number}_chunk_{i}.txt").write_text(chunk, encoding="utf-8")
-    print(len(chunks))
+            # Path(f"./chunks/{Path(src_file).stem}_page_{page_number}_chunk_{i}.txt").write_text(chunk, encoding="utf-8")
     store_chunks_in_chromadb(chunks)
 
+def collection_exists():
+    return COLLECTION_NAME in {
+        collection.name
+        for collection in client.list_collections()
+    }
+
+
 if __name__ == "__main__":
-    pdf_files = sorted(Path("./pdfs").glob("*.pdf"))
-    convert_pdf_to_markdown_pages(pdf_files)
+    if collection_exists():
+        collection = client.get_collection(
+            name=COLLECTION_NAME,
+            embedding_function=None
+        )
+
+        print(
+            f"Collection already exists with "
+            f"{collection.count()} chunks."
+        )
+        print(
+            "Delete chromadb_storage for rebuild? (y/n): "
+        )
+        response = input().lower()
+        if response == "y":
+            client.delete_collection(name=COLLECTION_NAME)
+            convert_pdf_to_markdown_pages(pdf_files)
+            
+    else:
+        convert_pdf_to_markdown_pages(pdf_files)
