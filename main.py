@@ -1,13 +1,31 @@
 import chromadb
+from sentence_transformers import SentenceTransformer
+from agents import evaluateQuery, evaluateChunks, answerQuery
 
-def send_query_to_chromadb(query, top_k=8):
-    collection = client.get_collection(name="data_chunks")
+model = SentenceTransformer(
+    "sentence-transformers/all-MiniLM-L6-v2"
+)
+
+def send_query_to_chromadb(query_embedding, top_k=8):
+    collection = client.get_collection(name="data_chunks",
+                                       embedding_function=None)
     results = collection.query(
-        query_texts=[query],
-        n_results=top_k
+        query_embeddings=[query_embedding],
+        n_results=top_k,
+        include=["documents", "metadatas", "distances"]
     )
     return results
 
+def answer(user_query):
+    if(evaluateQuery(user_query).decision=="not_relevant"):
+        return {
+            "status": "not_relevant",
+            "message": "The question is not related to the sources, and can not be answered."
+        }
+    
+    
+    
+    return
 
 if __name__ == "__main__":
 
@@ -19,8 +37,4 @@ if __name__ == "__main__":
             run = False
             print("Exiting the program.")
         else:
-            results = send_query_to_chromadb(user_query, top_k=8)
-            print("Top results:")
-            for i, result in enumerate(results['documents'][0]):
-                print(f"{i + 1}. {result}")
-                print(f"   Page Number: {results['metadatas'][0][i]['page_numbers']}, Chunk Number: {results['metadatas'][0][i]['chunk_numbers']}, Source File: {results['metadatas'][0][i]['src_files']}")
+            answer(user_query)
