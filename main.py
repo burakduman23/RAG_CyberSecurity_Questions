@@ -54,18 +54,28 @@ def answer(user_query):
             allowed_chunks = []
             for chunk in formatted_results:
                 if chunk["id"] in allowed_ids:
-                    allowed_chunks.append(chunk) 
-            return answerQuery(user_query, allowed_chunks)
+                    allowed_chunks.append(chunk)
+            answer_result = answerQuery(
+                user_query,
+                allowed_chunks
+            )
+
+            return {
+                "status": "answered",
+                "answer": answer_result.answer,
+                "source_chunks": answer_result.source_chunks
+            }
         else:
             return {
                 "status": "aborted",
-                "message": "There are not any information to answer this question" 
+                "message": "There are not any information to answer this question"
             }
+
 
 def print_answer(result):
     print("\n" + "=" * 60)
 
-    if result["answer"]:
+    if result["status"] != "answered":
         print("\nResult\n")
         print(result["message"])
         print("\n" + "=" * 60)
@@ -84,8 +94,8 @@ def print_answer(result):
 
     print("\n" + "=" * 60)
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
 
     run = True
     while run:
