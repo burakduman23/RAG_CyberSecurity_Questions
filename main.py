@@ -65,7 +65,7 @@ def answer(user_query):
 def print_answer(result):
     print("\n" + "=" * 60)
 
-    if result["status"] != "answered":
+    if result["answer"]:
         print("\nResult\n")
         print(result["message"])
         print("\n" + "=" * 60)
