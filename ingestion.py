@@ -3,15 +3,11 @@ from glob import glob
 import chromadb
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 import pymupdf4llm
-from sentence_transformers import SentenceTransformer
 from pathlib import Path
 from clean_store import store_chunks_in_chromadb
 import json
 
 pdf_files = sorted(Path("./pdfs").glob("*.pdf"))
-model = SentenceTransformer(
-    "sentence-transformers/all-MiniLM-L6-v2"
-)
 exclusions = json.load(open("exclusions.json", "r", encoding="utf-8"))
 client = chromadb.PersistentClient(path="./chromadb_storage")
 COLLECTION_NAME = "data_chunks"
