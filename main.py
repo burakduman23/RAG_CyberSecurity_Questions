@@ -68,7 +68,7 @@ def answer(user_query):
         else:
             return {
                 "status": "aborted",
-                "message": "There are not any information to answer this question"
+                "message": "The retrieved documents do not contain enough information"
             }
 
 
